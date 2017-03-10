@@ -107,7 +107,6 @@ class Ushahidi_Repository_Post extends Ushahidi_Repository implements
 				'completed_stages' => $this->getCompletedStagesForPost($data['id']),
 			];
 		}
-
 		return new Post($data);
 	}
 
@@ -139,6 +138,8 @@ class Ushahidi_Repository_Post extends Ushahidi_Repository implements
 		$values = $this->post_value_factory
 			->proxy($this->include_value_types)
 			->getAllForPost($id, $this->include_attributes);
+
+
 
 		$output = [];
 		foreach ($values as $value) {
@@ -177,7 +178,8 @@ class Ushahidi_Repository_Post extends Ushahidi_Repository implements
 			'published_to',
 			'include_types', 'include_attributes', // Specify values to include
 			'group_by', 'group_by_tags', 'group_by_attribute_key', // Group results
-			'timeline', 'timeline_interval', 'timeline_attribute' // Timeline params
+			'timeline', 'timeline_interval', 'timeline_attribute', // Timeline params
+			'unmapped' //contains a location or not
 		];
 	}
 
@@ -210,7 +212,7 @@ class Ushahidi_Repository_Post extends Ushahidi_Repository implements
 
 		$query = $this->search_query;
 		$table = $this->getTable();
-
+		
 		// Filter by status
 		$status = $search->getFilter('status', ['published']);
 		//
@@ -314,7 +316,7 @@ class Ushahidi_Repository_Post extends Ushahidi_Repository implements
 			// Convert to UTC (needed in case date came with a tz)
 			$date_after->setTimezone(new DateTimeZone('UTC'));
 			$query->where("$table.post_date", '>=', $date_after->format('Y-m-d H:i:s'));
-		}
+		}	
 
 		if ($search->date_before)
 		{
@@ -351,6 +353,13 @@ class Ushahidi_Repository_Post extends Ushahidi_Repository implements
 				;
 		}
 
+		if($search->unmapped) {
+			if(!in_array('unmapped', $search->unmapped) && in_array('mapped', $search->unmapped)) {
+				// Here I want only posts which have lat/lng attached in the 'value'-field
+			} else if(in_array('unmapped', $search->unmapped) && !in_array('mapped', $search->unmapped)) {
+					//Here I want the posts that does NOT have lat/lng attached
+			}
+		}
 		if ($search->current_stage) {
 			$stages = $search->current_stage;
 			if (!is_array($stages)) {
@@ -507,7 +516,7 @@ class Ushahidi_Repository_Post extends Ushahidi_Repository implements
 				->where("$table.status", '=', 'published')
 				->or_where("$table.user_id", '=', $user->id)
 				->and_where_close();
-		}
+		}				
 	}
 
 	// SearchRepository
