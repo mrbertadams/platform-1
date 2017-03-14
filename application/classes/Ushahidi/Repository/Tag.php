@@ -39,6 +39,9 @@ class Ushahidi_Repository_Tag extends Ushahidi_Repository implements
 	// ReadRepository
 	public function getEntity(Array $data = null)
 	{
+		if(isset($data['parent_id'])){
+			$data['parent'] = $this->getParent($data['parent_id']);
+		}
 		return new Tag($data);
 	}
 
@@ -70,6 +73,28 @@ class Ushahidi_Repository_Tag extends Ushahidi_Repository implements
 			// Tag text searching
 			$query->where('tag', 'LIKE', "%{$search->q}%");
 		}
+	}
+	
+	// SearchRepository
+	public function getSearchResults()
+	{
+		$query = $this->getSearchQuery();
+		$results = $query->distinct(TRUE)->execute($this->db);
+		return $this->getCollection($results->as_array());
+	}
+	
+	protected function getParent($id)
+	{
+		$tag = DB::select('tag')->from('tags')
+				->where('id', '=', $id)
+				->execute($this->db)
+				->get('tag', NULL);
+
+		return [
+			'id' => $id,
+			'url' => URL::site(Ushahidi_Rest::url($this->getTable(), $id), Request::current()),
+			'tag' => $tag
+		];
 	}
 
 	// CreateRepository
