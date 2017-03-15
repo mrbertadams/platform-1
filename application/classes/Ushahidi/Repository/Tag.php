@@ -42,7 +42,17 @@ class Ushahidi_Repository_Tag extends Ushahidi_Repository implements
 		if(isset($data['parent_id'])){
 			$data['parent'] = $this->getParent($data['parent_id']);
 		}
-		return new Tag($data);
+		$data['surveys'] = $this->getFormsForTag($data['id']);
+		$tag = new Tag($data);
+		Kohana::$log->add(Log::ERROR, print_r($tag, true));
+		return $tag;
+	}
+
+	private function getFormsForTag($id) {
+		$result = DB::select('form_id') ->from('forms_tags')
+			->where('tag_id', '=', $id)
+			->execute($this->db);
+		return $result->as_array(NULL, 'form_id');
 	}
 
 	// Ushahidi_JsonTranscodeRepository
@@ -102,9 +112,79 @@ class Ushahidi_Repository_Tag extends Ushahidi_Repository implements
 	{
 		$record = $entity->asArray();
 		$record['created'] = time();
-		return $this->executeInsert($this->removeNullValues($record));
+		//unset forms
+		unset($record['surveys']);
+		$id = $this->executeInsert($this->removeNullValues($record));
+
+		if($entity->surveys) {
+			$this->updateTagForms($id, $entity->surveys);
+		}
+
+		return $id;
 	}
 
+	protected function updateTagForms($tag_id, $forms) {
+		if(empty($forms)) {
+			DB::delete('forms_tags')
+				->where('tag_id', '=', $tag_id)
+				->execute($this->db);
+		} else{
+			// create method
+			// $existing = $this->getFormsForTag($tag_id);
+			$insert = DB::insert('forms_tags', ['form_id', 'tag_id']);
+			$form_ids = [];
+			$new_forms = FALSE;
+
+			foreach($forms as $form) {
+				$insert->values([$form, $tag_id]);
+				$new_forms = TRUE;
+			}
+			if($new_forms)
+			{
+				$insert->execute($this->db);
+			}
+		}
+	}
+// 	public function update(Entity $entity)
+// 	{
+// 		$tag = $entity->getChanged();
+
+// 		if($entity->hasChanged('surveys'))
+// 		{
+// 			$surveys = $entity->surveys;
+// 			Kohana::$log->add(Log::ERROR, print_r($surveys, true));
+// 			if(empty($surveys)){
+// 				DB::delete('forms_tags')
+// 				->where('tag_id', '=', $entity->id)
+// 				->execute($this->db);
+// 			}
+// 			else
+// 			{
+// 				$existing = DB::select('form_id')->from('forms_tags')
+// 				->where('tag_id', '=', $entity->id)
+// 				->execute($this->db)
+// 				->as_array(NULL 'form_id');
+// 			}
+// 		// 		$insert = DB::insert('forms_tags', ['tag_id', 'form_id']);
+
+// 		// 		$form_ids = [];
+// 		// 		$new_forms = FALSE;
+// 		// 		foreach($surveys as $survey)
+// 		// 		{
+// 		// 			if(is_array($survey)
+// 		// 			{
+// 		// 				$survey = $survey['id']
+// 		// 			}
+
+// 		// 		}
+
+
+// 		// 	}
+// 		// }
+// 		// Kohana::$log->add(Log::ERROR, print_r($entity, true));	
+// 		// Kohana::$log->add(Log::ERROR, print_r($tag, true));	
+// 	}
+// }
 	// UpdatePostTagRepository
 	public function getByTag($tag)
 	{
