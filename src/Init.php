@@ -388,4 +388,4 @@ $di->params['Ushahidi\Core\Tool\Authorizer\PostAuthorizer'] = [
 
 $di->set('authorizer.console', $di->lazyNew('Ushahidi\Console\Authorizer\ConsoleAuthorizer'));
 
-require('App\Init');
+require __DIR__ . '/App/Init.php';
