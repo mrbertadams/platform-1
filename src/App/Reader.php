@@ -9,10 +9,12 @@
  * @license    https://www.gnu.org/licenses/agpl-3.0.html GNU Affero General Public License Version 3 (AGPL3)
  */
 
+namespace Ushahidi\App;
+
 use League\Csv\Reader as CSVReader;
 use Ushahidi\Core\Tool\Reader;
 
-class Ushahidi_Reader extends CSVReader implements Reader
+class Reader extends CSVReader implements Reader
 {
 	// intentionally left blank
 }

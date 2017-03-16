@@ -1,7 +1,9 @@
 <?php defined('SYSPATH') or die('No direct script access');
 
 /**
- * Ushahidi Reader Factory
+ * Ushahidi Filesystem
+ *
+ * Implemented using Flysystem
  *
  * @author     Ushahidi Team <team@ushahidi.com>
  * @package    Ushahidi\Application
@@ -9,14 +11,12 @@
  * @license    https://www.gnu.org/licenses/agpl-3.0.html GNU Affero General Public License Version 3 (AGPL3)
  */
 
-use Ushahidi\Core\Tool\ReaderFactory;
+namespace Ushahidi\App;
 
-class Ushahidi_CSVReaderFactory implements ReaderFactory
+use Ushahidi\Core\Tool\Filesystem;
+use League\Flysystem\Filesystem as FlyFs;
+
+class Filesystem extends FlyFs implements Filesystem
 {
-	public function createReader($file)
-	{
-		return $file instanceof \SplFileObject
-			? Ushahidi_Reader::createFromFileObject($file)
-			: Ushahidi_Reader::createFromPath($file);
-	}
+	// Class exists only to fufill implementation requirements
 }
